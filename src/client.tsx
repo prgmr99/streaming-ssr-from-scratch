@@ -15,12 +15,20 @@ async function TodoList() {
 
 function App() {
   return (
-    <div>
-      <h1>Todo List</h1>
-      <Suspense fallback={<div>loading...</div>}>
-        <TodoList />
-      </Suspense>
-    </div>
+    <html lang="ko">
+      <head>
+        <meta charSet="utf-8" />
+        <title>Streaming SSR</title>
+      </head>
+      <body>
+        <div id="root">
+          <h1>Todo List</h1>
+          <Suspense fallback={<div>loading...</div>}>
+            <TodoList />
+          </Suspense>
+        </div>
+      </body>
+    </html>
   );
 }
 
