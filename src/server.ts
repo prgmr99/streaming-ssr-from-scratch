@@ -15,7 +15,7 @@ app.get("/", (ctx) => {
   const webStream = Readable.toWeb(passThrough);
 
   const { pipe, abort } = ReactDomServer.renderToPipeableStream(element, {
-    onAllReady: () => {
+    onShellReady: () => {
       pipe(passThrough);
     },
     onError: (error) => {
