@@ -3,7 +3,9 @@ export type TodoItem = {
   title: string;
 };
 
-export async function getTodoList(): Promise<TodoItem[]> {
+export async function getTodoList(
+  milliseconds: number = 2000,
+): Promise<TodoItem[]> {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([
@@ -11,6 +13,6 @@ export async function getTodoList(): Promise<TodoItem[]> {
         { id: "2", title: "Read a book" },
         { id: "3", title: "Write a blog post" },
       ]);
-    }, 2000);
+    }, milliseconds);
   });
 }

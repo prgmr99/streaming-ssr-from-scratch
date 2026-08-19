@@ -1,8 +1,8 @@
 import { Suspense } from "react";
 import { getTodoList } from "./lib";
 
-async function TodoList() {
-  const todoList = await getTodoList();
+async function TodoList({ milliseconds }: { milliseconds: number }) {
+  const todoList = await getTodoList(milliseconds);
 
   return (
     <ul>
@@ -11,6 +11,18 @@ async function TodoList() {
       })}
     </ul>
   );
+}
+
+function Slow() {
+  return <TodoList milliseconds={3000} />;
+}
+
+function Fast() {
+  return <TodoList milliseconds={500} />;
+}
+
+function Medium() {
+  return <TodoList milliseconds={1500} />;
 }
 
 function App() {
@@ -24,7 +36,13 @@ function App() {
         <div id="root">
           <h1>Todo List</h1>
           <Suspense fallback={<div>loading...</div>}>
-            <TodoList />
+            <Slow />
+          </Suspense>
+          <Suspense fallback={<div>loading...</div>}>
+            <Fast />
+          </Suspense>
+          <Suspense fallback={<div>loading...</div>}>
+            <Medium />
           </Suspense>
         </div>
       </body>
