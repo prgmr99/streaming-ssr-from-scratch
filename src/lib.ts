@@ -6,6 +6,7 @@ export type TodoItem = {
 export async function getTodoList(
   milliseconds: number = 2000,
 ): Promise<TodoItem[]> {
+  console.log("getTodoList 진입");
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve([

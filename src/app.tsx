@@ -1,4 +1,21 @@
-import { useState } from "react";
+import { Suspense, useState } from "react";
+import { getTodoList } from "./lib";
+
+async function TodoList({ milliseconds }: { milliseconds: number }) {
+  console.log(
+    "getTodoList 실행:",
+    typeof window === "undefined" ? "서버" : "브라우저",
+  );
+  const todoList = await getTodoList(milliseconds);
+
+  return (
+    <ul>
+      {todoList.map((todoItem) => {
+        return <li key={todoItem.id}>{todoItem.title}</li>;
+      })}
+    </ul>
+  );
+}
 
 /**
  * 하이드레이션이 동작하는지 확인하기 위한 컴포넌트.
@@ -33,6 +50,10 @@ function App() {
         <div id="root">
           <h1>Hydration Test</h1>
           <Counter />
+
+          <Suspense fallback={<div>loading...</div>}>
+            <TodoList milliseconds={2000} />
+          </Suspense>
         </div>
       </body>
     </html>
