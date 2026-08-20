@@ -1,0 +1,59 @@
+---
+layout: ../layouts/BaseLayout.astro
+title: React Streaming SSR 직접 만들어보기
+---
+
+import StreamComparison from "../components/StreamComparison.tsx";
+
+<div class="prose">
+
+# React Streaming SSR
+
+{/* 여기에 도입부. 무엇을 만들었고 왜 만들었는지 두세 문단. */}
+
+<div class="figure">
+  <StreamComparison client:visible />
+</div>
+
+{/* 위 시각화를 받는 문단. 받는 바이트는 같은데 언제 보내느냐만 다르다. */}
+
+## renderToString의 한계
+
+{/* 0단계. async 컴포넌트와 Suspense를 renderToString에 넣으면 무슨 일이 생기는가. */}
+{/* React가 뱉은 에러 메시지. does not support Suspense. */}
+{/* TTFB 0.005s, Total 0.005s. 빠른 게 아니라 데이터를 포기한 것. */}
+
+## 스트리밍으로 바꾸기
+
+{/* 1단계. renderToPipeableStream과 onShellReady. */}
+{/* TTFB 0.006s, Total 2.017s. 격차가 벌어진 것이 스트리밍의 증거. */}
+{/* 응답이 세 덩어리로 오는 구조. */}
+
+## HTML 껍데기를 붙이는 두 가지 방법
+
+{/* 2단계. A는 문자열 조립, B는 React 트리 안에. */}
+{/* React가 DOCTYPE을 자동 주입한다는 발견. */}
+{/* 스트림에 개입한다는 것, 즉 read 다음 enqueue의 의미. */}
+
+## 스트리밍을 일부러 죽여보기
+
+{/* 2단계 실험. 모았다가 한 번에 내보내면 어떻게 되는가. */}
+{/* curl 출력도 TTFB도 정상으로 보인다. */}
+{/* 차이는 오직 화면에서만 드러난다. 2초간 흰 화면. */}
+
+## onShellReady와 onAllReady
+
+{/* T1-1. 한 줄 바꾸면 fallback도 RC 스크립트도 전부 사라진다. */}
+{/* 사람을 위한 것과 기계를 위한 것. 크롤러와 SSG. */}
+
+## boundary가 여러 개일 때
+
+{/* T1-2. HTML은 되돌릴 수 없다는 근본 제약. */}
+{/* 문서 끝에 숨겨 보내고 JS로 옮기기. */}
+{/* 자리는 선언 순, 내용은 완료 순. RC 함수가 하는 일. */}
+
+## 정리
+
+{/* 직접 만들며 알게 된 것들. 틀렸던 가설도 여기에. */}
+
+</div>
