@@ -3,6 +3,8 @@ layout: ../layouts/BaseLayout.astro
 title: React Streaming SSR 직접 만들어보기
 ---
 
+import RcAnimation from "../components/RcAnimation.tsx";
+import ReadyComparison from "../components/ReadyComparison.tsx";
 import StreamComparison from "../components/StreamComparison.tsx";
 
 <div class="prose">
@@ -46,11 +48,19 @@ import StreamComparison from "../components/StreamComparison.tsx";
 {/* T1-1. 한 줄 바꾸면 fallback도 RC 스크립트도 전부 사라진다. */}
 {/* 사람을 위한 것과 기계를 위한 것. 크롤러와 SSG. */}
 
+<div class="figure">
+  <ReadyComparison client:visible />
+</div>
+
 ## boundary가 여러 개일 때
 
 {/* T1-2. HTML은 되돌릴 수 없다는 근본 제약. */}
 {/* 문서 끝에 숨겨 보내고 JS로 옮기기. */}
 {/* 자리는 선언 순, 내용은 완료 순. RC 함수가 하는 일. */}
+
+<div class="figure">
+  <RcAnimation client:visible />
+</div>
 
 ## 정리
 
