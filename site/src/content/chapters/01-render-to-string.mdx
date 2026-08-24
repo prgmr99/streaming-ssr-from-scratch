@@ -1,0 +1,109 @@
+---
+title: renderToString의 한계
+summary: 왜 기존 SSR API로는 스트리밍을 할 수 없는가
+order: 1
+---
+
+{/* 0단계. async 컴포넌트와 Suspense를 renderToString에 넣으면 무슨 일이 생기는가. */}
+{/* React가 뱉은 에러 메시지. does not support Suspense. */}
+{/* TTFB 0.005s, Total 0.005s. 빠른 게 아니라 데이터를 포기한 것. */}
+
+## 서버 렌더링의 기본함수
+
+React에서 서버 렌더링에 오래 쓰인 함수는 `renderToString`입니다. 이름 그대로 React 트리를 문자열로 바꿉니다.
+
+```typescript
+const html = renderToString(<App />);
+```
+
+그런데 이 함수로는 방금 본 스트리밍을 할 수 없습니다. 한 번 직접 넣어보겠습니다.
+
+**데이터를 가져오는 컴포넌트**
+
+목록을 서버에서 가져와 그리는 컴포넌트를 만듭니다.
+
+```tsx
+async function TodoList() {
+  // 임의로 2초가 걸리는 getTodoList를 호출합니다.
+  const todoList = await getTodoList();
+
+  return <ul>{...}</ul>;
+}
+```
+
+`await`가 있으니 결과가 즉시 나오지 않습니다. React는 이런 컴포넌트를 `<Suspense>`로 감싸서 "기다리는 동안 보여줄 것"을 지정합니다.
+
+```tsx
+<Suspense fallback={<div>loading...</div>}>
+  <TodoList />
+</Suspense>
+```
+
+이것을 `renderToString`에 넣고 응답을 확인해봤습니다.
+
+**결과**
+
+```
+<div><h1>Todo List</h1><!--$!--><template data-msg="Switched to client rendering
+because the server rendering aborted due to: The server used renderToString which
+does not support Suspense..."></template><div>loading...</div><!--/$--></div>
+
+TTFB: 0.005270s / Total: 0.005307s
+```
+
+목록이 없습니다. `loading...`만 남았습니다.
+React가 HTML 안에 이유를 알려주고 있습니다. 서버 렌더링을 중단했고(aborted), 클라이언트 렌더링으로 넘겼으며, 그 이유는 renderToString이 Suspense를 지원하지 않기 때문이라는 것입니다.
+
+**왜 지원할 수 없는가**
+
+함수의 반환 타입을 보면 답이 나옵니다.
+
+```typescript
+function renderToString(element): string;
+```
+
+string을 반환합니다. Promise가 아닙니다.
+
+동기 함수와 비동기 함수의 차이를 "순서"가 아니라 "무엇을 반환하는가"로 보면 명확해집니다.
+
+- 동기 함수는 호출하면 **완성된 값**을 돌려줍니다.
+- 비동기 함수는 호출하면 **나중에 값을 주겠다는 약속(Promise)**를 둘려줍니다.
+
+renderToString은 return하는 순간 완성된 문자열을 갖고 있어야 합니다. "2초 뒤에 드리겠다"고 말할 수단이 없었습니다.
+그런 상태를 표현하려면 Promise를 반환해야 하는데, 시그니처가 그렇지 않기 때문입니다.
+
+트리를 순회하다 TodoList를 만나면 이런 상황이 됩니다.
+
+```
+<html> 그림
+<h1> 그림
+<TodoList> 만남 → 2초 뒤에 결과가 나온다고 한다
+                → 기다려야 하는데 기다릴 방법이 없다
+                → 포기하고 fallback만 넣는다
+```
+
+renderToString이 일을 안 하는 것이 아닙니다. "아직 없음"이라는 상태를 담을 그릇이 없는 것입니다.
+
+TTFB 0.005초, Total 0.005초, 두 값이 사실상 같습니다.
+
+TodoLists는 2초를 기다려야 하는 컴포넌트입니다. 그런데 응답은 0.005초만에 끝났습니다. 기다리지 않았다는 의미입니다.
+그래서 응답에도 목록이 없는 것입니다.
+
+**그러면 어떻게 해야 하는가**
+
+두 가지 선택지가 있을 것 같습니다.
+
+1. 클라이언트에서 그리게 두기. React가 실제로 택한 대안이지만, 서버 렌더링을 하는 목적이 사라집니다. 크롤러는 loading...만 보게 됩니다.
+
+2. 데이터를 미리 가져와 props로 넘기기
+
+```typescript
+const todos = await getTodoList();
+const html = renderToString(<App todos={todos} />);
+```
+
+getServerSideProps와 같은 방식입니다. 목록은 들어가지만, TTFB가 2초가 되고, 사용자는 그동안 빈 화면을 보게됩니다. 서론에서 본 왼쪽 화면이 이것입니다.
+
+즉, renderToString으로는 빠른 첫 화면과 완성된 HTML을 동시에 가질 수 없어보입니다.
+
+React는 에러 메세지에서 답을 알려주고 있었습니다. Suspense를 지원하는 다른 함수로 바꾸라는 것입니다.

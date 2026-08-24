@@ -1,0 +1,19 @@
+---
+title: onShellReady와 onAllReady
+summary: 사람을 위한 응답과 기계를 위한 응답
+order: 5
+---
+
+import ReadyComparison from "../../components/ReadyComparison.tsx";
+
+{/* 콜백 이름 한 줄만 바꾼다. */}
+{/* fallback, 자리 표시자, 교체 스크립트가 전부 사라진다. */}
+{/* 주석 마커도 미해결에서 해결로 바뀐다. */}
+{/* 크롤러와 SSG에는 완성본이 필요하다. */}
+{/* TTFB가 또 속인다. 헤더 전송 시점이 잡히기 때문. */}
+
+## 콜백이 두 종류인 이유
+
+<div class="figure">
+  <ReadyComparison client:visible />
+</div>

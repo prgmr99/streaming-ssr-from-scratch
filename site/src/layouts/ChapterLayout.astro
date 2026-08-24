@@ -1,0 +1,158 @@
+---
+import BaseLayout from "./BaseLayout.astro";
+import type { CollectionEntry } from "astro:content";
+
+interface Props {
+  chapter: CollectionEntry<"chapters">;
+  prev?: CollectionEntry<"chapters">;
+  next?: CollectionEntry<"chapters">;
+  total: number;
+}
+
+const { chapter, prev, next, total } = Astro.props;
+const { title, summary, order } = chapter.data;
+---
+
+<BaseLayout title={`${title} — React Streaming SSR`} description={summary}>
+  <header class="chapter-head">
+    <a href="/" class="chapter-back">← 목차</a>
+    <span class="chapter-count">{order} / {total}</span>
+  </header>
+
+  <div class="prose">
+    <p class="chapter-eyebrow">{String(order).padStart(2, "0")}</p>
+    <h1>{title}</h1>
+    <p class="chapter-summary">{summary}</p>
+
+    <slot />
+
+    <nav class="chapter-nav">
+      {
+        prev ? (
+          <a href={`/chapters/${prev.id}`} class="chapter-link">
+            <span class="chapter-link-dir">이전</span>
+            <span class="chapter-link-title">{prev.data.title}</span>
+          </a>
+        ) : (
+          <span />
+        )
+      }
+      {
+        next ? (
+          <a href={`/chapters/${next.id}`} class="chapter-link is-next">
+            <span class="chapter-link-dir">다음</span>
+            <span class="chapter-link-title">{next.data.title}</span>
+          </a>
+        ) : (
+          <a href="/" class="chapter-link is-next">
+            <span class="chapter-link-dir">끝</span>
+            <span class="chapter-link-title">목차로 돌아가기</span>
+          </a>
+        )
+      }
+    </nav>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  /* 상단 바 */
+  .chapter-head {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: var(--measure);
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    background: color-mix(in srgb, var(--paper) 88%, transparent);
+    backdrop-filter: blur(8px);
+  }
+
+  .chapter-back {
+    font-size: 0.8125rem;
+    color: var(--muted);
+    text-decoration: none;
+  }
+
+  .chapter-back:hover {
+    color: var(--ink);
+  }
+
+  .chapter-count {
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* 장 머리 */
+  .prose > .chapter-eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.875rem;
+    color: var(--arrived);
+    margin: 0 0 0.5rem;
+  }
+
+  .prose > .chapter-summary {
+    font-size: 1.125rem;
+    line-height: 1.65;
+    color: var(--muted);
+    margin: 0 0 3.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  /* 장 이동 */
+  .chapter-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-top: 5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .chapter-link {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    text-decoration: none;
+    background: var(--surface);
+  }
+
+  .chapter-link:hover {
+    border-color: var(--ink);
+  }
+
+  .chapter-link.is-next {
+    text-align: right;
+    grid-column: 2;
+  }
+
+  .chapter-link-dir {
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    color: var(--muted);
+  }
+
+  .chapter-link-title {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  @media (max-width: 36rem) {
+    .chapter-nav {
+      grid-template-columns: 1fr;
+    }
+    .chapter-link.is-next {
+      grid-column: 1;
+    }
+  }
+</style>

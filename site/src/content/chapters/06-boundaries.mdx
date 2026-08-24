@@ -1,0 +1,19 @@
+---
+title: boundary가 여러 개일 때
+summary: 자리는 선언 순으로, 내용은 완료 순으로
+order: 6
+---
+
+import RcAnimation from "../../components/RcAnimation.tsx";
+
+{/* HTML은 위에서 아래로만 흐른다. 이미 보낸 것을 고칠 수 없다. */}
+{/* 그래서 문서 끝에 숨겨 보내고 스크립트로 옮긴다. */}
+{/* 지연 시간이 다른 컴포넌트 3개를 배치한 실험. */}
+{/* 자리는 선언 순, 내용은 완료 순. id로 찾아가므로 뒤섞여도 괜찮다. */}
+{/* 함수 정의는 응답당 한 번만 온다. */}
+
+## HTML은 되돌릴 수 없다
+
+<div class="figure">
+  <RcAnimation client:visible />
+</div>

@@ -1,0 +1,124 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import StreamHook from "../components/StreamHook.tsx";
+
+const chapters = (await getCollection("chapters")).sort(
+  (a, b) => a.data.order - b.data.order,
+);
+---
+
+<BaseLayout title="React Streaming SSR 직접 만들어보기">
+  <div class="prose">
+    <h1>React Streaming SSR</h1>
+
+    <!--
+      여기에 도입부를 넣으세요.
+      - 흰 화면 경험
+      - 다른 서비스는 다르더라
+    -->
+
+    <div class="figure">
+      <StreamHook client:visible />
+    </div>
+
+    <!--
+      여기에 시각화를 받는 문단.
+      - 데이터는 같고 언제 보내느냐만 다르다
+      - Pages Router라 못 썼다
+      - 그래서 직접 만들었다
+    -->
+
+    <nav class="toc">
+      <h2 class="toc-head">목차</h2>
+      <ol class="toc-list">
+        {
+          chapters.map((chapter) => (
+            <li>
+              <a href={`/chapters/${chapter.id}`} class="toc-item">
+                <span class="toc-num">
+                  {String(chapter.data.order).padStart(2, "0")}
+                </span>
+                <span class="toc-text">
+                  <span class="toc-title">{chapter.data.title}</span>
+                  <span class="toc-summary">{chapter.data.summary}</span>
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ol>
+    </nav>
+  </div>
+</BaseLayout>
+
+<style is:global>
+  .toc {
+    margin-top: 4.5rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .toc-head {
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+    margin: 0 0 1rem;
+  }
+
+  .toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    counter-reset: none;
+  }
+
+  .toc-list li {
+    margin: 0;
+  }
+
+  .toc-item {
+    display: flex;
+    gap: 1rem;
+    padding: 0.875rem 0.25rem;
+    border-bottom: 1px solid var(--rule);
+    text-decoration: none;
+  }
+
+  .toc-item:hover {
+    background: var(--surface);
+  }
+
+  .toc-item:hover .toc-title {
+    color: var(--arrived);
+  }
+
+  .toc-num {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    color: var(--pending);
+    padding-top: 0.125rem;
+    flex-shrink: 0;
+  }
+
+  .toc-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  .toc-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.4;
+  }
+
+  .toc-summary {
+    font-size: 0.8125rem;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+</style>
