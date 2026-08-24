@@ -6,56 +6,47 @@ import { useEffect, useRef, useState } from "react";
  * 숫자도 API 이름도 없다. "같은 데이터인데 화면이 왜 다른가"라는
  * 질문만 남기는 것이 목적이다. 답은 본문에서 하나씩 푼다.
  *
- * 화면에 들어오면 한 번 자동 재생된다.
+ * 무한 반복 재생. 끝 상태를 잠시 보여준 뒤 처음으로 돌아간다.
  */
 
-const DURATION = 2600;
+const DURATION = 2600; // 한 바퀴 재생 길이
+const HOLD = 1400; // 끝난 뒤 머무는 시간
+const CYCLE = DURATION + HOLD;
+
 const SHELL_AT = 6;
 const CONTENT_AT = 2010;
 
 export default function StreamHook() {
   const [elapsed, setElapsed] = useState(0);
-  const [playing, setPlaying] = useState(false);
+  const [running, setRunning] = useState(true);
 
   const rafRef = useRef<number | null>(null);
-  const startedAtRef = useRef(0);
-  const baseRef = useRef(0);
-  const didAutoPlay = useRef(false);
+  const originRef = useRef(0);
 
-  // 처음 한 번은 알아서 재생한다
+  // 모션을 줄이는 설정이면 자동 재생하지 않고 완료 상태로 둔다
   useEffect(() => {
-    if (didAutoPlay.current) return;
-    didAutoPlay.current = true;
-
     const reduced = window.matchMedia?.(
       "(prefers-reduced-motion: reduce)",
     ).matches;
 
     if (reduced) {
+      setRunning(false);
       setElapsed(DURATION);
-      return;
     }
-
-    const id = window.setTimeout(() => setPlaying(true), 400);
-    return () => window.clearTimeout(id);
   }, []);
 
   useEffect(() => {
-    if (!playing) return;
+    if (!running) return;
 
-    startedAtRef.current = performance.now();
-    baseRef.current = elapsed;
+    // 멈췄다 다시 켤 때 지금 위치에서 이어지도록 원점을 잡는다
+    originRef.current = performance.now() - elapsed;
 
     const tick = (now: number) => {
-      const next = baseRef.current + (now - startedAtRef.current);
+      const pos = (now - originRef.current) % CYCLE;
 
-      if (next >= DURATION) {
-        setElapsed(DURATION);
-        setPlaying(false);
-        return;
-      }
+      // HOLD 구간에서는 마지막 프레임을 유지한다
+      setElapsed(pos > DURATION ? DURATION : pos);
 
-      setElapsed(next);
       rafRef.current = requestAnimationFrame(tick);
     };
 
@@ -64,13 +55,9 @@ export default function StreamHook() {
     return () => {
       if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
     };
+    // elapsed는 의도적으로 제외 — 매 프레임 effect가 재실행되면 안 된다
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing]);
-
-  const replay = () => {
-    setElapsed(0);
-    setPlaying(true);
-  };
+  }, [running]);
 
   const progress = (elapsed / DURATION) * 100;
   const seconds = (elapsed / 1000).toFixed(1);
@@ -89,13 +76,19 @@ export default function StreamHook() {
       </div>
 
       <div className="hk-bar">
+        <button
+          className="hk-toggle"
+          onClick={() => setRunning((v) => !v)}
+          aria-label={running ? "재생 멈춤" : "재생"}
+        >
+          {running ? "❚❚" : "▶"}
+        </button>
+
         <div className="hk-track">
           <div className="hk-fill" style={{ width: `${progress}%` }} />
         </div>
+
         <span className="hk-clock">{seconds}s</span>
-        <button className="hk-replay" onClick={replay} disabled={playing}>
-          다시 보기
-        </button>
       </div>
 
       <p className="hk-caption">
@@ -139,9 +132,7 @@ function Screen({
 }
 
 const CSS = `
-.hk {
-  font-family: var(--font-sans);
-}
+.hk { font-family: var(--font-sans); }
 
 .hk-screens {
   display: grid;
@@ -203,6 +194,21 @@ const CSS = `
   margin-top: 1.25rem;
 }
 
+.hk-toggle {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  line-height: 1;
+  padding: 0.4375rem 0.5625rem;
+  min-width: 2rem;
+  border: 1px solid var(--rule);
+  border-radius: 4px;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.hk-toggle:hover { border-color: var(--ink); color: var(--ink); }
+
 .hk-track {
   flex: 1;
   height: 2px;
@@ -224,21 +230,6 @@ const CSS = `
   min-width: 2.5rem;
   text-align: right;
 }
-
-.hk-replay {
-  font-family: inherit;
-  font-size: 0.75rem;
-  padding: 0.3125rem 0.625rem;
-  border: 1px solid var(--rule);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--ink);
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.hk-replay:hover:not(:disabled) { border-color: var(--ink); }
-.hk-replay:disabled { opacity: .35; cursor: default; }
 
 .hk-caption {
   margin: 1rem 0 0;
