@@ -13,7 +13,7 @@ const { chapter, prev, next, total } = Astro.props;
 const { title, summary, order } = chapter.data;
 ---
 
-<BaseLayout title={`${title} — React Streaming SSR`} description={summary}>
+<BaseLayout title={`${title} — Streaming SSR`} description={summary}>
   <header class="chapter-head">
     <a href="/" class="chapter-back">← 목차</a>
     <span class="chapter-count">{order} / {total}</span>
@@ -55,6 +55,13 @@ const { title, summary, order } = chapter.data;
 </BaseLayout>
 
 <style is:global>
+  /* 요약문 바로 뒤에 오는 h2는 자기 선을 그리지 않는다 */
+  .prose > .chapter-summary + h2 {
+    border-top: 0;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
   /* 상단 바 */
   .chapter-head {
     position: sticky;
