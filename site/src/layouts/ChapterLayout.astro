@@ -11,11 +11,13 @@ interface Props {
 
 const { chapter, prev, next, total } = Astro.props;
 const { title, summary, order } = chapter.data;
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
 <BaseLayout title={`${title} — Streaming SSR`} description={summary}>
   <header class="chapter-head">
-    <a href="/" class="chapter-back">← 목차</a>
+    <a href={base || "/"} class="chapter-back">← 목차</a>
     <span class="chapter-count">{order} / {total}</span>
   </header>
 
@@ -29,7 +31,7 @@ const { title, summary, order } = chapter.data;
     <nav class="chapter-nav">
       {
         prev ? (
-          <a href={`/chapters/${prev.id}`} class="chapter-link">
+          <a href={`${base}/chapters/${prev.id}`} class="chapter-link">
             <span class="chapter-link-dir">이전</span>
             <span class="chapter-link-title">{prev.data.title}</span>
           </a>
@@ -39,12 +41,12 @@ const { title, summary, order } = chapter.data;
       }
       {
         next ? (
-          <a href={`/chapters/${next.id}`} class="chapter-link is-next">
+          <a href={`${base}/chapters/${next.id}`} class="chapter-link is-next">
             <span class="chapter-link-dir">다음</span>
             <span class="chapter-link-title">{next.data.title}</span>
           </a>
         ) : (
-          <a href="/" class="chapter-link is-next">
+          <a href={base || "/"} class="chapter-link is-next">
             <span class="chapter-link-dir">끝</span>
             <span class="chapter-link-title">목차로 돌아가기</span>
           </a>

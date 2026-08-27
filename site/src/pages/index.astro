@@ -6,6 +6,8 @@ import StreamHook from "../components/StreamHook.tsx";
 const chapters = (await getCollection("chapters")).sort(
   (a, b) => a.data.order - b.data.order,
 );
+
+const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
 <BaseLayout title="Streaming SSR 직접 만들어보기">
@@ -35,7 +37,7 @@ const chapters = (await getCollection("chapters")).sort(
         {
           chapters.map((chapter) => (
             <li>
-              <a href={`/chapters/${chapter.id}`} class="toc-item">
+              <a href={`${base}/chapters/${chapter.id}`} class="toc-item">
                 <span class="toc-num">
                   {String(chapter.data.order).padStart(2, "0")}
                 </span>
