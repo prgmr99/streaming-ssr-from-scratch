@@ -4,42 +4,49 @@ summary: renderToPipeableStream과 onShellReady
 order: 2
 ---
 
-{/* 1단계. renderToPipeableStream과 onShellReady. */}
-{/* TTFB 0.006s, Total 2.017s. 격차가 벌어진 것이 스트리밍의 증거. */}
-{/* 응답이 세 덩어리로 오는 구조. */}
+## renderToPipeableStream
 
-## 반환값을 바꾸면 된다
+앞 장에서 `renderToString`이 `Suspense`를 지원할 수 없는 이유를 봤습니다. `string`을 반환하기 때문에 "아직 없음"을 표현할 수 없었습니다.
 
-앞 절에서 `renderToString`이 Suspense를 지원할 수 없는 이유를 봤습니다. `string`을 반환하기 때문에 "아직 없음"을 표현할 수 없다는 이유때문이었습니다.
+그러면 어떻게 해야 스트리밍을 적용할 수 있을지 찾아보는 과정에서 `renderToPipeableStream`이라는 함수를 알게 되었습니다.
 
-그러면 반환값이 다른 함수를 쓰면 됩니다.
+`renderToString`이 React 트리를 **문자열로 바꿔 한 번에 돌려준다면**, `renderToPipeableStream`은 **스트림으로 렌더링**합니다. 준비된 부분부터 흘려보내고, 나머지는 나중에 이어서 보냅니다.
+
+반환 타입도 달랐습니다.
+
+```typescript
+function renderToPipeableStream(element, options): { pipe; abort };
+```
+
+문자열이 아니라 스트림을 조작하는 도구를 돌려줍니다. 그리고 options로 콜백을 받습니다.
 
 ```typescript
 const { pipe, abort } = renderToPipeableStream(<App />, {
-    onShellReady() { ... },
-    onAllReady() { ... },
-    onError(error) { ... },
+  onShellReady() { ... },
+
+  // 모든 Suspense가 해결된 뒤에 불린다. 5장에서 다룹니다.
+  onAllReady() { ... },
 });
 ```
 
-문자열 대신 스트림을 조작하는 도구를 돌려주고, 콜백을 받습니다.
-콜백이 핵심입니다. "언제 무엇을 해라"를 미리 등록해두는 것이니, **시간을 담을 자리가 생깁니다.**
-`renderToString`에는 이 자리가 없었습니다.
+콜백은 "언제 무엇을 해라"를 미리 등록해두는 것입니다.
+시간을 담을 자리가 여기서 생깁니다. `renderToString`에는 이 자리가 없었습니다.
 
-|                          | 반환                     | 기다림을 표현할 수 있나 |
-| ------------------------ | ------------------------ | ----------------------- |
-| `renderToString`         | `string`                 | ❌                      |
-| `renderToPipeableStream` | `{ pipe, abort }` + 콜백 | ✅                      |
+|                          | 인자           | 반환              | 기다림을 표현할 수 있나 |
+| ------------------------ | -------------- | ----------------- | ----------------------- |
+| `renderToString`         | element        | `string`          | ❌                      |
+| `renderToPipeableStream` | element + 콜백 | `{ pipe, abort }` | ✅                      |
 
-**shell이라는 개념**
+## shell이라는 개념
 
-`onShellReady`의 shell은 **Suspense 바깥 영역**을 말합니다.
+위의 콜백에서 본 `onShellReady`의 shell이 무엇인지 궁금했습니다.
+shell은 **Suspense 바깥 영역**을 말합니다.
 
 ```typescript
 <div id="root">
-  <h1>Todo List</h1>                          {/* shell */}
-  <Suspense fallback={<div>loading...</div>}>
-    <TodoList />                              {/* shell 아님 */}
+  <h1>Todo List</h1>                           {/* shell */}
+  <Suspense fallback={<div>loading...</div>}>  {/* fallback도 shell */}
+    <TodoList />                               {/* 이것만 shell 아님 */}
   </Suspense>
 </div>
 ```
@@ -47,7 +54,7 @@ const { pipe, abort } = renderToPipeableStream(<App />, {
 `<h1>`은 기다릴 것이 없으니 즉시 만들 수 있습니다. `TodoList`만 2초가 걸립니다.
 `onShellReady`는 기다릴 필요 없는 부분이 다 준비된 시점에 불립니다. 이때 응답을 내보내기 시작하면, 사용자는 2초를 기다리지 않고, 화면을 볼 수 있습니다.
 
-### 서버 코드
+## 서버에 붙여보기
 
 Node 스트림을 웹 스트림으로 옮겨 응답에 싣습니다.
 
@@ -67,6 +74,7 @@ app.get("/", () => {
     onShellReady() {
       pipe(passThrough);
     },
+
     onError(error) {
       console.error(error);
       passThrough.destroy();
@@ -82,36 +90,38 @@ app.get("/", () => {
 });
 ```
 
-> PassThrough와 Readable.toWeb은 스트림 형식을 맞추는 배관입니다. React는 Node 스트림에 쓰고 Response는 웹 스트림을 받으므로, 그 사이를 이어줘야 합니다. 눈여겨볼 곳은 onShellReady입니다. 여기서 pipe를 부르기 때문에 shell이 준비되는 즉시 응답이 나가기 시작합니다.
+<details>
+<summary>Node 스트림과 웹 스트림은 왜 다른가</summary>
 
-`renderToPipeableStream` 호출은 렌더링을 시작시킬 뿐 응답을 만들지 않습니다. 스트림을 Response에 실어 반환하는 것은 별개의 일입니다.
+Node.js의 스트림 API와 웹 표준 스트림은 서로 다른 인터페이스입니다. React의 `renderToPipeableStream`은 Node 스트림에 쓰고, `Response`는 웹 스트림을 받으므로 변환이 필요합니다.
 
-### 결과가
+</details>
+
+`PassThrough`와 `Readable.toWeb`은 스트림 형식을 맞추는 배관입니다. 눈여겨볼 곳은 `onShellReady`입니다. 여기서 `pipe`를 부르기 때문에 shell이 준비되는 즉시 응답이 나가기 시작합니다.
+
+`renderToPipeableStream` 호출은 렌더링을 시작시킬 뿐 응답을 만들지 않습니다. 스트림을 `Response`에 실어 반환하는 것은 별개의 일입니다.
+
+## 결과
 
 ```bash
 curl -N -w '\nTTFB: %{time_starttransfer}s / Total: %{time_total}s\n' localhost:3001
 ```
 
--N을 붙여야 합니다. curl의 버퍼링을 끄는 옵션인데, 없으면 스트리밍이 눈에 보이지 않습니다.
-
 ```
 TTFB: 0.006660s / Total: 2.017178s
 ```
 
-앞 절과 비교하면 이렇습니다.
+`renderToString`과 비교하면 이렇습니다.
 
 |                          | TTFB   | Total  | 목록 |
 | ------------------------ | ------ | ------ | ---- |
 | `renderToString`         | 0.005s | 0.005s | 없음 |
-| `renderToPipeableStream` | 0.006s | 2.017s | 없음 |
+| `renderToPipeableStream` | 0.006s | 2.017s | 있음 |
 
-TTFB와 Total이 차이가 발생했습니다. 스트리밍이 동작했다는 의미입니다. 첫 바이트가 약 0.006s에 나갔고, 응답은 약 2초에 걸쳐 열려 있었습니다.
+TTFB와 Total이 차이가 벌어졌습니다. 스트리밍이 동작했다는 의미입니다. 첫 바이트가 0.006s에 나갔고, 응답은 약 2초에 걸쳐 열려 있었습니다.
 `renderToString`은 두 값이 같았습니다. 기다린 적이 없기 때문입니다.
 
-응답은 세 덩어리로 왔습니다.
--N 옵션 덕에 도착하는 대로 화면에 찍힙니다.
-
-#### 첫 번째 0.006s
+### 첫 번째 0.006s
 
 ```html
 <div>
@@ -124,7 +134,7 @@ TTFB와 Total이 차이가 발생했습니다. 스트리밍이 동작했다는 �
 
 `loading...`이 있고, `<template id="B:0">`라는 빈 태그가 있습니다. 나중에 채울 자리로 이해하고 넘어가면 됩니다.
 
-#### 두 번째 2.017s
+### 두 번째 2.017s
 
 ```html
 <div hidden id="S:0">
@@ -137,7 +147,7 @@ TTFB와 Total이 차이가 발생했습니다. 스트리밍이 동작했다는 �
 
 목록이 도착했습니다. `hidden`이 붙어 있어 화면에는 보이지 않습니다. 문서 맨 아래에 도착했습니다.
 
-#### 세 번째 2.017s
+### 세 번째 2.017s
 
 ```html
 <script>
@@ -147,9 +157,9 @@ TTFB와 Total이 차이가 발생했습니다. 스트리밍이 동작했다는 �
 
 `B:0` 자리에 `S:0`의 내용을 옮기라는 명령입니다.
 
-#### 왜 이런 구조인가
+### 왜 이런 구조인가
 
 HTML은 위에서 아래로만 흐릅니다. 이미 보낸 부분을 고칠 수 없습니다.
-그런데, 스트리밍이 해야 하는 일은 위쪽의 loading...을 나중에 실제 내용으로 바꾸는 것입니다. 이것은 HTML만으로는 불가능합니다.
+그런데 스트리밍이 해야 하는 일은 위쪽의 `loading...`을 나중에 실제 내용으로 바꾸는 것입니다. 이것은 HTML만으로는 불가능합니다.
 그래서 우회합니다. 완성된 조각을 문서 끝에 숨겨서 보내고, 작은 스크립트로 제자리에 옮깁니다.
 이 구조는 다음 장들에서 더 자세히 다룹니다.

@@ -185,6 +185,26 @@ const { title, description = "Streaming SSR을 직접 구현하며 정리한 기
     color: var(--muted);
   }
 
+  .prose details {
+    margin: 1.75rem 0;
+    padding: 0.875rem 1.125rem;
+    border: 1px solid var(--rule);
+    border-radius: 6px;
+    background: var(--surface);
+    font-size: 0.9375rem;
+  }
+
+  .prose summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--muted);
+  }
+
+  .prose details[open] summary {
+    margin-bottom: 0.75rem;
+    color: var(--ink);
+  }
+
   /* ── 시각화 자리 ────────────────────────────────
      본문 폭을 넘어 양옆으로 벌어진다. */
   .figure {
