@@ -10,7 +10,7 @@ const chapters = (await getCollection("chapters")).sort(
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
-<BaseLayout title="Streaming SSR 직접 만들어보기">
+<BaseLayout title="Streaming SSR 직접 만들어보기" description="React의 Streaming SSR을 프레임워크 없이 직접 구현하며 정리한 기록. renderToString의 한계부터 renderToPipeableStream, onShellReady, $RC 스크립트까지 응답 원문을 직접 확인하며 따라갑니다.">
   <div class="prose">
     <h1>Streaming SSR</h1>
 

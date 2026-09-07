@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://prgmr99.github.io/streaming-ssr-from-scratch/sitemap-index.xml

@@ -5,9 +5,11 @@ import react from "@astrojs/react";
 
 import mdx from "@astrojs/mdx";
 
+import sitemap from "@astrojs/sitemap";
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://prgmr99.github.io",
   base: "/streaming-ssr-from-scratch",
-  integrations: [react(), mdx()],
+  integrations: [react(), mdx(), sitemap()],
 });

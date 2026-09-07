@@ -10,12 +10,12 @@ interface Props {
 }
 
 const { chapter, prev, next, total } = Astro.props;
-const { title, summary, order } = chapter.data;
+const { title, summary, description, order } = chapter.data;
 
 const base = import.meta.env.BASE_URL.replace(/\/$/, "");
 ---
 
-<BaseLayout title={`${title} — Streaming SSR`} description={summary}>
+<BaseLayout title={`${title} — Streaming SSR`} description={description ?? summary}>
   <header class="chapter-head">
     <a href={base || "/"} class="chapter-back">← 목차</a>
     <span class="chapter-count">{order} / {total}</span>
