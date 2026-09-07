@@ -7,12 +7,11 @@ React의 Streaming SSR을 프레임워크 없이 직접 구현하고, 그 과정
 <!-- 여기에 GIF 또는 스크린샷.
      loading... 세 개가 순차적으로 목록으로 바뀌는 3초짜리면 충분합니다. -->
 
-## 왜 만들었나
+## 배경
 
-<!-- 서론에 쓰신 내용을 두세 문장으로.
-     - 처음 SSR을 접했을 때 빈 화면을 봤던 경험
-     - Pages Router라 적용할 수 없었던 것
-     - 그래서 직접 만들어봤다는 것 -->
+처음 Server Side Rendering을 접했던 것은 Next.js의 getServerSideProps를 통해서였습니다. 서버에서 HTML을 만들어 보내는데, 사용자는 한동안 빈 화면만 보고 있었습니다.
+
+그러다 다른 서비스들의 기술 블로그와 발표 영상을 보면서 Streaming SSR을 알게 되었습니다. 사내 프로젝트에 적용해보고 싶었지만 Next.js 14 Pages Router라 방법이 없었고, 그래서 프레임워크 없이 직접 만들어보기로 했습니다.
 
 ## 다루는 내용
 
@@ -67,6 +66,20 @@ curl -N -w '\nTTFB: %{time_starttransfer}s / Total: %{time_total}s\n' localhost:
 > 저장소 코드는 **6장 시점 상태**입니다.
 > 2~5장의 응답은 boundary가 하나였을 때의 것이라 지금 코드와 다릅니다.
 
+### 따라 해보기
+
+각 장의 코드는 글에 전부 실려 있습니다. 클론한 뒤 글을 보며 직접 고쳐보시면 됩니다.
+
+특히 아래 두 가지는 **한 줄만 바꾸면** 확인할 수 있습니다.
+
+| 장  | 바꾸는 곳                                             | 무엇을 보게 되는가                           |
+| --- | ----------------------------------------------------- | -------------------------------------------- |
+| 4   | `controller.enqueue(value)`를 배열에 모았다가 한 번에 | 응답도 TTFB도 그대로인데 화면만 달라진다     |
+| 5   | `onShellReady`를 `onAllReady`로                       | fallback과 교체 스크립트가 응답에서 사라진다 |
+
+`curl`보다 **브라우저로 확인하는 편이 정확합니다.**
+스트리밍이 죽었는지는 숫자가 아니라 화면에서 드러납니다.
+
 ### 설명 페이지
 
 `site` 디렉터리에서 실행합니다.
@@ -91,8 +104,3 @@ npm run dev
 - [mugglim / build-your-own-react-streaming-ssr](https://github.com/mugglim/build-your-own-react-streaming-ssr) — 이 프로젝트의 출발점이 된 글
 - [React 공식 문서 — renderToPipeableStream](https://react.dev/reference/react-dom/server/renderToPipeableStream)
 - [Basic Fizz Architecture (facebook/react#20970)](https://github.com/facebook/react/pull/20970) — `B`, `S` 접두어의 유래
-
-## 앞으로
-
-<!-- 다음에 다룰 것이 있으면 여기에.
-     없으면 이 절은 빼셔도 됩니다. -->
