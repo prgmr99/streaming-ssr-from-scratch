@@ -31,13 +31,13 @@ function App() {
         <div id="root">
           <h1>Todo List</h1>
 
-          <Suspense fallback={<div>loading...</div>}>
+          {/* <Suspense fallback={<div>loading...</div>}>
             <TodoList milliseconds={3000} />
-          </Suspense>
+          </Suspense> */}
 
-          <Suspense fallback={<div>loading...</div>}>
+          {/* <Suspense fallback={<div>loading...</div>}>
             <TodoList milliseconds={500} />
-          </Suspense>
+          </Suspense> */}
 
           <Suspense fallback={<div>loading...</div>}>
             <TodoList milliseconds={1500} />
